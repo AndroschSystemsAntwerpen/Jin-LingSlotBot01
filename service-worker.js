@@ -1,51 +1,64 @@
-// service-worker.js
+// Service Worker for PWA
 
-// Cache versioning
-const CACHE_NAME = 'v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/script.js',
-];
-
-// Install event
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
-    );
+    console.log('Service Worker installing...');
+    self.skipWaiting();
 });
 
-// Activate event
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
+    console.log('Service Worker activating...');
+});
+
+self.addEventListener('fetch', (event) => {
+    // Network-first strategy for API calls
+    if (event.request.url.includes('/api/')) {
+        event.respondWith(
+            fetch(event.request)
+                .catch(() => caches.match(event.request))
+        );
+    }
+    // Cache-first strategy for static assets
+    else {
+        event.respondWith(
+            caches.match(event.request)
+                .then((response) => {
+                    return response || fetch(event.request);
                 })
-            );
+        );
+    }
+});
+
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'sync-wallet-data') {
+        event.waitUntil(syncWalletData());
+    }
+});
+
+self.addEventListener('push', (event) => {
+    const data = event.data ? event.data.json() : {};
+    event.waitUntil(
+        self.registration.showNotification(data.title, {
+            body: data.body,
+            data: data,
         })
     );
 });
 
-// Fetch event
-self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Cache hit - return response
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request);
-            })
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil(
+        clients.openWindow(event.notification.data.url)
     );
+});
+
+async function syncWalletData() {
+    // Background sync logic for wallet data
+    console.log('Syncing wallet data...');
+    // Your wallet syncing logic
+}
+
+
+// Comprehensive logging
+self.addEventListener('error', (event) => {
+    console.error('Service Worker error:', event);
 });
