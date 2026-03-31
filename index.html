@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AgaCoin Starbase Slots</title>
+    <meta name="theme-color" content="#0a0a12">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-512.png">
+
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #fff200;
+            --dark-bg: #0a0a12;
+            --panel-bg: #1a1a2e;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin:0; padding:0; background:var(--dark-bg); font-family:'Helvetica',Arial,sans-serif; color:white; overflow:hidden; user-select:none; }
+        #app-container { width:100vw; height:100vh; display:flex; flex-direction:column; background:var(--panel-bg); overflow:hidden; }
+        .header { display:flex; justify-content:space-between; align-items:center; padding:12px 15px; border-bottom:1px solid rgba(0,243,255,0.2); }
+        .wallet-info { display:flex; flex-direction:column; gap:2px; }
+        .balance-label { font-size:10px; text-transform:uppercase; color:var(--neon-cyan); letter-spacing:1px; }
+        .balance-value { font-size:1.25rem; font-weight:bold; color:var(--neon-yellow); }
+        .wallet-btn { background:rgba(0,243,255,0.1); border:1px solid var(--neon-cyan); color:var(--neon-cyan); padding:8px 16px; border-radius:12px; font-size:13px; cursor:pointer; }
+        .reels-container { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; background:#000; padding:5px; border-radius:10px; border:2px solid #333; height:240px; position:relative; overflow:hidden; }
+        .reel { background:#111; height:100%; position:relative; overflow:hidden; border-radius:4px; }
+        .symbol-strip { position:absolute; width:100%; display:flex; flex-direction:column; transition:transform 2s cubic-bezier(0.45,0.05,0.55,0.95); }
+        .symbol { height:76px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; border-bottom:1px solid #222; }
+        .symbol.expanding { animation:expandGlow 0.5s infinite alternate; background:rgba(255,242,0,0.2); }
+        @keyframes expandGlow { from{box-shadow:inset 0 0 5px var(--neon-yellow);} to{box-shadow:inset 0 0 20px var(--neon-yellow);} }
+        .controls { padding:15px; display:flex; flex-direction:column; gap:15px; }
+        .bet-selector { display:flex; justify-content:center; align-items:center; gap:20px; }
+        .bet-btn { width:40px; height:40px; border-radius:50%; border:1px solid var(--neon-magenta); background:transparent; color:var(--neon-magenta); font-size:1.8rem; display:flex; align-items:center; justify-content:center; }
+        .spin-btn { width:100%; height:60px; background:linear-gradient(45deg,var(--neon-cyan),var(--neon-magenta)); border:none; border-radius:15px; color:white; font-size:1.6rem; font-weight:bold; text-transform:uppercase; letter-spacing:2px; cursor:pointer; box-shadow:0 4px 15px rgba(255,0,255,0.4); }
+        .overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100; text-align:center; padding:20px; }
+        .win-announcement { font-size:2.8rem; color:var(--neon-yellow); text-shadow:0 0 15px var(--neon-yellow); }
+        .payline-svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:5; }
+        .status-bar { font-size:12px; color:#888; text-align:center; margin-top:5px; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <div class="header">
+        <div class="wallet-info">
+            <span class="balance-label">STARBASE BALANCE</span>
+            <div class="balance-value"><span id="balance-aco">1000</span> ACO</div>
+            <div style="font-size:11px;color:#0f0;">Wallet: <span id="wallet-balance">0.00</span> ACO</div>
+        </div>
+        <button class="wallet-btn" id="connect-btn">🔌 Connect Phantom</button>
+    </div>
+
+    <div class="slot-machine" style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:15px;padding:15px 0;">
+        <div class="reels-container" id="reels-container">
+            <svg class="payline-svg" id="payline-svg" viewBox="0 0 500 240" preserveAspectRatio="none"></svg>
+            <div class="reel" id="reel-0"><div class="symbol-strip"></div></div>
+            <div class="reel" id="reel-1"><div class="symbol-strip"></div></div>
+            <div class="reel" id="reel-2"><div class="symbol-strip"></div></div>
+            <div class="reel" id="reel-3"><div class="symbol-strip"></div></div>
+            <div class="reel" id="reel-4"><div class="symbol-strip"></div></div>
+        </div>
+
+        <div class="free-spins-banner" id="fs-banner" style="display:none;background:rgba(255,242,0,0.2);border:2px solid var(--neon-yellow);padding:10px;border-radius:10px;text-align:center;">
+            FREE SPINS: <span id="fs-count">0</span> | SPECIAL: <span id="fs-special">?</span>
+        </div>
+
+        <div class="controls">
+            <div class="bet-selector">
+                <button class="bet-btn" onclick="adjustBet(-10)">−</button>
+                <div class="bet-display">
+                    <div class="balance-label">CURRENT BET</div>
+                    <div style="font-size:1.25rem;font-weight:bold;color:var(--neon-magenta);"><span id="current-bet">10</span> ACO</div>
+                </div>
+                <button class="bet-btn" onclick="adjustBet(10)">+</button>
+            </div>
+            <button class="spin-btn" id="spin-btn" onclick="handleSpin()">SPIN</button>
+            <div class="status-bar" id="status-msg">READY TO MANUFACTURE</div>
+        </div>
+    </div>
+
+    <!-- Overlays -->
+    <div id="win-overlay" class="overlay">
+        <div class="win-announcement">BIG WIN!</div>
+        <div id="win-amount" style="font-size:2.2rem;color:white;margin:10px 0;">+500 ACO</div>
+        <button class="wallet-btn" style="padding:15px 40px;font-size:1.1rem;" onclick="closeOverlay()">COLLECT</button>
+    </div>
+
+    <div id="fs-overlay" class="overlay">
+        <h2 style="color:var(--neon-yellow);">10 FREE SPINS TRIGGERED</h2>
+        <p>Jin-Ling Factory Overdrive</p>
+        <div id="special-symbol-display" style="font-size:5rem;margin:20px 0;">🤖</div>
+        <p>Special Expanding Symbol Selected!</p>
+        <button class="wallet-btn" style="padding:15px 40px;" onclick="startFreeSpins()">START FREE SPINS</button>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.ready(); tg.expand(); tg.setHeaderColor('#0a0a12'); tg.setBackgroundColor('#0a0a12');
+
+    const ACO_MINT = "EQg3JEsExwL6wu5JqQ5j29KDKqX5us4tzVnXWvb3pump";
+    const RPC_URL = "https://api.mainnet-beta.solana.com";
+
+    let publicKey = null, inGameBalance = 1000, currentBet = 10;
+    let isSpinning = false, freeSpinsLeft = 0, specialSymbol = null, isFreeSpinMode = false;
+
+    const SYMBOLS = [
+        { char: '🤖', val: 10, weight: 1 }, { char: '👮‍♂️', val: 9, weight: 2 },
+        { char: '🦾', val: 8, weight: 4 }, { char: '📦', val: 7, weight: 5 },
+        { char: '🅰️', val: 6, weight: 10 }, { char: '🇰', val: 5, weight: 12 },
+        { char: '🇶', val: 4, weight: 15 }, { char: '🇯', val: 3, weight: 18 },
+        { char: '🔟', val: 2, weight: 20 }
+    ];
+
+    const PAYLINES = [[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0],[1,0,1,2,1],[1,2,1,0,1],[0,1,0,1,0]];
+
+    async function connectWallet() {
+        if (window.solana?.isPhantom) {
+            const resp = await window.solana.connect();
+            publicKey = resp.publicKey.toString();
+            document.getElementById('connect-btn').innerHTML = '✅ Connected';
+            fetchACOBalance();
+        } else {
+            alert('Phantom Wallet wird empfohlen!');
+        }
+    }
+
+    async function fetchACOBalance() {
+        if (!publicKey) return;
+        try {
+            const payload = { jsonrpc:"2.0", id:1, method:"getTokenAccountsByOwner", params:[publicKey, {mint:ACO_MINT}, {encoding:"jsonParsed"}] };
+            const res = await fetch(RPC_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)});
+            const data = await res.json();
+            if (data.result?.value?.length > 0) {
+                const amount = data.result.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
+                document.getElementById('wallet-balance').textContent = amount.toFixed(2);
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // === Deine vollständigen Game-Funktionen (init, setupReels, handleSpin usw.) ===
+    // Kopiere hier einfach den Rest aus meiner vorherigen finalen Version (die ohne Fehler).
+
+    window.addEventListener('load', () => {
+        // init() + Event Listener
+        document.getElementById('connect-btn').addEventListener('click', connectWallet);
+    });
+</script>
+</body>
+</html>
