@@ -142,9 +142,27 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       text-shadow: none; line-height: 1.2; }
     .hdr-sub2 { font-family: 'Share Tech Mono', monospace; font-size: 7px; color: rgba(0,243,255,0.5); letter-spacing: 2px; }
-    .hdr-right { text-align: right; }
+    .hdr-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
     .bal-lbl { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: rgba(255,215,0,0.5); letter-spacing: 1px; text-transform: uppercase; }
     .bal-val { font-size: 1.5rem; font-weight: 900; color: var(--neon-gold); text-shadow: 0 0 14px rgba(255,215,0,0.5); }
+    #dac-hub-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 9px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,34,68,0.05));
+      border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 4px;
+      color: var(--neon-gold);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px; letter-spacing: 2px;
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-top: 2px;
+    }
+    #dac-hub-btn:hover {
+      border-color: var(--neon-gold);
+      background: rgba(255,215,0,0.12);
+      box-shadow: 0 0 10px rgba(255,215,0,0.2);
+    }
 
     /* STATUS TICKER */
     #ticker {
@@ -481,6 +499,7 @@
     <div class="hdr-right">
       <div class="bal-lbl">Credits</div>
       <div class="bal-val" id="bal">1000</div>
+      <a href="dac-hub.html" id="dac-hub-btn" title="Buy DAC — In-Game Currency">🐉 DAC HUB</a>
     </div>
   </div>
 
@@ -653,7 +672,7 @@ const SYM_H      = 80;
 const betSteps = [5,10,25,50,100,200,500];
 let betIdx = 1;
 let G = {
-  balance:  1000,
+  balance:  parseInt(localStorage.getItem('jli_credits') || '1000'),
   bet:      10,
   spinning: false,
   freeSpins: 0,
@@ -1009,6 +1028,7 @@ function updateUI() {
   document.getElementById('st-spins').textContent = G.spins.toLocaleString();
   document.getElementById('st-bw').textContent    = G.bigWins.toLocaleString();
   document.getElementById('fs-count').textContent = G.freeSpins;
+  localStorage.setItem('jli_credits', G.balance);
 }
 
 // ═══════════════════════════════════════════════════

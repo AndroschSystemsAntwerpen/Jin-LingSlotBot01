@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>DAC HUB — Ming's Factory</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+<style>
+:root {
+  --gold:       #ffd700;
+  --gold-d:     #b8860b;
+  --gold-l:     #ffe566;
+  --red:        #ff2244;
+  --cyan:       #00f3ff;
+  --green:      #00ff88;
+  --purple:     #9945ff;
+  --orange:     #ff6600;
+  --blue:       #00aaff;
+  --dark:       #050508;
+  --panel:      #0d0d18;
+  --card:       #0a0a14;
+  --steel:      #1a1a2e;
+  --border:     rgba(255,215,0,0.15);
+  --muted:      #556;
+  --text:       #ccd;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  min-height: 100%;
+  background: var(--dark);
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,215,0,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(255,34,68,0.07) 0%, transparent 55%),
+    repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,243,255,0.008) 3px, rgba(0,243,255,0.008) 4px);
+  pointer-events: none;
+}
+
+/* Pipe decorations */
+.pipe-h {
+  position: fixed; height: 10px; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, #1e1e3a 0%, #0d0d1f 100%);
+  border-bottom: 1px solid #333355; left: 0; right: 0;
+}
+.pipe-top { top: 0; }
+.pipe-bot { bottom: 0; }
+
+/* ── LAYOUT ── */
+.page {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 480px;
+  margin: 0 auto;
+  padding: 14px 12px 40px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* ── HEADER ── */
+.header {
+  text-align: center;
+  padding: 16px 0 8px;
+}
+.header-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 4px;
+  color: var(--gold-d);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 2px;
+  cursor: pointer; text-decoration: none;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+  display: block;
+  width: fit-content;
+  margin: 0 auto 12px;
+}
+.header-back:hover { border-color: var(--gold); color: var(--gold); }
+
+.header-eyebrow {
+  font-size: 8px; letter-spacing: 4px; color: var(--muted);
+  margin-bottom: 4px;
+}
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 32px; font-weight: 900; letter-spacing: 4px;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,215,0,0.15);
+  line-height: 1;
+}
+.header-title span { color: var(--red); text-shadow: 0 0 20px var(--red); }
+.header-sub {
+  font-size: 8px; letter-spacing: 2px; color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-d), var(--gold), var(--red), var(--gold), var(--gold-d), transparent);
+  position: relative;
+  margin: 2px 0;
+}
+.divider::before {
+  content: '⬟'; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8px; color: var(--gold);
+  background: var(--dark); padding: 0 6px;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-d), transparent);
+}
+.card-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px; letter-spacing: 3px;
+  color: var(--gold-d); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold-d);
+  box-shadow: 0 0 6px var(--gold);
+  flex-shrink: 0;
+}
+
+/* ── STATUS BADGE ── */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 8px; letter-spacing: 1px; border: 1px solid;
+}
+.status-badge.disconnected { border-color: var(--muted); color: var(--muted); }
+.status-badge.connected    { border-color: var(--green); color: var(--green); background: rgba(0,255,136,0.05); }
+.status-badge.connecting   { border-color: var(--gold); color: var(--gold); animation: pulse 1s infinite; }
+
+@keyframes pulse { 50% { opacity: 0.4; } }
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+.badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.badge-dot.live { animation: pulse 1s infinite; }
+
+/* ── TOKEN INFO ── */
+.token-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,215,0,0.08);
+  border-radius: 7px;
+}
+.token-icon {
+  font-size: 36px;
+  filter: drop-shadow(0 0 10px rgba(255,215,0,0.6));
+  flex-shrink: 0;
+}
+.token-details { flex: 1; min-width: 0; }
+.token-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px; color: var(--gold); letter-spacing: 1px; line-height: 1.1;
+}
+.token-ticker { font-size: 8px; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
+.token-addr {
+  font-size: 7px; color: var(--blue);
+  margin-top: 4px; word-break: break-all; line-height: 1.4;
+}
+.pump-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 10px;
+  background: rgba(153,69,255,0.1);
+  border: 1px solid rgba(153,69,255,0.3);
+  border-radius: 5px;
+  color: var(--purple);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px; letter-spacing: 1px;
+  text-decoration: none;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.pump-link:hover { background: rgba(153,69,255,0.2); }
+
+/* ── NETWORK BAR ── */
+.network-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px;
+  background: var(--panel);
+  border: 1px solid rgba(255,215,0,0.06);
+  border-radius: 7px;
+  font-size: 8px; color: var(--muted); letter-spacing: 1px;
+}
+.net-pill {
+  display: flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 10px; font-size: 8px;
+}
+.net-pill.sol { background: rgba(153,69,255,0.12); color: var(--purple); border: 1px solid rgba(153,69,255,0.2); }
+.net-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: pulse 1.5s infinite; }
+
+/* ── WALLET BUTTONS ── */
+.wallet-grid { display: flex; flex-direction: column; gap: 8px; }
+
+.wallet-btn {
+  width: 100%; padding: 13px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: all 0.2s;
+  text-align: left; position: relative; overflow: hidden;
+}
+.wallet-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.04), transparent);
+  transform: translateX(-100%); transition: transform 0.5s;
+}
+.wallet-btn:hover::after { transform: translateX(100%); }
+.wallet-btn:hover { border-color: rgba(255,215,0,0.35); }
+.wallet-btn:active { transform: scale(0.98); }
+.wallet-btn.active-wallet { border-color: var(--green); background: rgba(0,255,136,0.04); }
+.wallet-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.wicon {
+  width: 42px; height: 42px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.wallet-btn.phantom  .wicon { background: rgba(153,69,255,0.15); border: 1px solid rgba(153,69,255,0.3); }
+.wallet-btn.metamask .wicon { background: rgba(255,107,0,0.12);  border: 1px solid rgba(255,107,0,0.3); }
+.wallet-btn.exodus   .wicon { background: rgba(0,210,170,0.1);   border: 1px solid rgba(0,210,170,0.25); }
+.wallet-btn.trust    .wicon { background: rgba(0,170,255,0.1);   border: 1px solid rgba(0,170,255,0.25); }
+
+.winfo { flex: 1; }
+.wname {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px; letter-spacing: 1px; color: var(--gold); line-height: 1;
+}
+.wdesc { font-size: 9px; color: var(--muted); margin-top: 3px; letter-spacing: 0.5px; }
+.warrow { color: var(--muted); font-size: 16px; transition: transform 0.2s; }
+.wallet-btn:hover .warrow { transform: translateX(3px); color: var(--gold); }
+
+/* ── CONNECTED PANEL ── */
+.connected-panel { display: none; flex-direction: column; gap: 8px; }
+.connected-panel.show { display: flex; }
+
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,215,0,0.07);
+  border-radius: 6px;
+}
+.info-label { font-size: 8px; color: var(--muted); letter-spacing: 1px; }
+.info-value { font-size: 11px; color: var(--gold); font-weight: 600; }
+.info-value.address {
+  font-size: 9px; color: var(--blue);
+  max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.info-value.green { color: var(--green); }
+.info-value.cyan  { color: var(--cyan); }
+
+.copy-btn {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--muted); font-size: 11px; padding: 2px 5px;
+  border-radius: 3px; transition: color 0.2s;
+}
+.copy-btn:hover { color: var(--gold); }
+
+.disconnect-btn {
+  width: 100%; padding: 8px;
+  background: transparent;
+  border: 1px solid rgba(255,34,68,0.2);
+  border-radius: 6px;
+  color: rgba(255,34,68,0.6);
+  font-size: 9px; letter-spacing: 2px;
+  cursor: pointer; transition: all 0.15s;
+}
+.disconnect-btn:hover { border-color: var(--red); color: var(--red); background: rgba(255,34,68,0.05); }
+
+/* ── EXCHANGE ── */
+.rate-banner {
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(255,34,68,0.03));
+  border: 1px solid rgba(255,215,0,0.12);
+  border-radius: 7px;
+  text-align: center;
+}
+.rate-main {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px; color: var(--gold);
+  text-shadow: 0 0 10px rgba(255,215,0,0.3);
+  line-height: 1;
+}
+.rate-sub { font-size: 8px; color: var(--muted); letter-spacing: 1px; margin-top: 3px; }
+.rate-live {
+  display: inline-block; margin-top: 4px;
+  font-size: 8px; color: var(--green); letter-spacing: 1px;
+  animation: pulse 2s infinite;
+}
+
+.input-label {
+  font-size: 8px; color: var(--muted); letter-spacing: 2px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 5px;
+}
+.input-balance { color: var(--blue); }
+
+.amount-wrap {
+  display: flex; align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.amount-wrap:focus-within { border-color: rgba(255,215,0,0.45); }
+
+.amount-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  padding: 12px 14px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px; color: var(--gold); width: 0;
+}
+.amount-input::placeholder { color: rgba(255,215,0,0.2); }
+
+.currency-tag {
+  padding: 0 14px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px; color: var(--muted);
+  border-left: 1px solid var(--border);
+  height: 100%; display: flex; align-items: center;
+}
+
+.quick-row { display: flex; gap: 5px; margin-top: 6px; }
+.quick-btn {
+  flex: 1; padding: 6px 4px;
+  background: transparent;
+  border: 1px solid rgba(255,215,0,0.1);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 9px; letter-spacing: 0.5px;
+  cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.quick-btn:hover, .quick-btn.active {
+  border-color: var(--gold-d); color: var(--gold);
+  background: rgba(255,215,0,0.07);
+}
+.quick-btn:active { transform: scale(0.93); }
+
+.dac-preview {
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(0,255,136,0.12);
+  border-radius: 7px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 6px;
+}
+.dac-preview-left { }
+.dac-preview-label { font-size: 8px; color: var(--muted); letter-spacing: 1px; }
+.dac-preview-val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px; color: var(--green);
+  text-shadow: 0 0 8px rgba(0,255,136,0.4);
+  line-height: 1.1;
+}
+.dac-preview-unit { font-size: 8px; color: var(--muted); margin-top: 1px; }
+.credits-preview {
+  text-align: right;
+}
+.credits-val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px; color: var(--cyan);
+  text-shadow: 0 0 8px rgba(0,243,255,0.3);
+}
+.credits-lbl { font-size: 8px; color: var(--muted); letter-spacing: 1px; }
+
+/* BUY BUTTON */
+.buy-btn {
+  width: 100%; height: 58px;
+  background: linear-gradient(180deg, #1e1200, #0f0800);
+  border: 1px solid var(--gold-d);
+  border-radius: 8px;
+  color: var(--gold);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px; letter-spacing: 4px; font-weight: 700;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255,215,0,0.1);
+  margin-top: 8px;
+}
+.buy-btn::before {
+  content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.buy-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.06), transparent);
+  transform: translateX(-100%); transition: transform 0.5s;
+}
+.buy-btn:not(:disabled):hover::after { transform: translateX(100%); }
+.buy-btn:not(:disabled):hover { box-shadow: 0 0 25px rgba(255,215,0,0.2), inset 0 0 20px rgba(255,215,0,0.05); border-color: var(--gold); }
+.buy-btn:not(:disabled):active { transform: scale(0.98); }
+.buy-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.buy-btn.processing {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  animation: processPulse 0.6s infinite alternate;
+}
+@keyframes processPulse { to { box-shadow: 0 0 25px rgba(0,243,255,0.3); } }
+
+/* ── TX HISTORY ── */
+.tx-list {
+  display: flex; flex-direction: column; gap: 5px;
+  max-height: 210px; overflow-y: auto;
+}
+.tx-list::-webkit-scrollbar { width: 3px; }
+.tx-list::-webkit-scrollbar-track { background: transparent; }
+.tx-list::-webkit-scrollbar-thumb { background: var(--gold-d); border-radius: 3px; }
+
+.tx-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,215,0,0.06);
+  border-radius: 6px;
+  animation: fadeSlide 0.3s ease;
+}
+@keyframes fadeSlide { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:none; } }
+
+.tx-icon {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+}
+.tx-icon.success { background: rgba(0,255,136,0.12); border: 1px solid rgba(0,255,136,0.3); }
+.tx-icon.pending { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); animation: pulse 1s infinite; }
+.tx-icon.failed  { background: rgba(255,34,68,0.1); border: 1px solid rgba(255,34,68,0.2); }
+
+.tx-details { flex: 1; min-width: 0; }
+.tx-desc { font-size: 10px; color: var(--text); }
+.tx-meta { font-size: 8px; color: var(--muted); margin-top: 1px; }
+
+.tx-amounts { text-align: right; }
+.tx-dac { font-family: 'Orbitron', sans-serif; font-size: 11px; color: var(--green); }
+.tx-sol { font-size: 9px; color: var(--blue); margin-top: 1px; }
+
+.no-tx {
+  text-align: center; padding: 20px;
+  font-size: 9px; color: var(--muted); letter-spacing: 2px;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; top: 18px; left: 50%;
+  transform: translateX(-50%) translateY(-30px);
+  background: var(--card); border-radius: 6px;
+  padding: 8px 18px; z-index: 999;
+  font-size: 10px; letter-spacing: 1px;
+  opacity: 0; transition: all 0.3s;
+  white-space: nowrap; pointer-events: none;
+  border: 1px solid;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.ok   { border-color: var(--green); color: var(--green); }
+.toast.err  { border-color: var(--red); color: var(--red); }
+.toast.info { border-color: var(--gold-d); color: var(--gold); }
+
+/* ── SUCCESS MODAL ── */
+.modal-bg {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.88);
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 22px;
+  width: 90%; max-width: 360px;
+  text-align: center;
+  animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative; overflow: hidden;
+}
+.modal::before {
+  content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+@keyframes modalIn { from { transform: scale(0.8); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-icon { font-size: 52px; margin-bottom: 12px; }
+.modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px; letter-spacing: 3px; color: var(--gold); margin-bottom: 8px;
+}
+.modal-body { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
+.modal-body span { color: var(--gold); font-weight: 600; }
+.modal-body .credit-span { color: var(--cyan); }
+.modal-txid {
+  font-size: 8px; color: var(--blue);
+  word-break: break-all; margin: 8px 0;
+  padding: 6px; background: rgba(0,0,0,0.3); border-radius: 4px;
+}
+.modal-actions { display: flex; gap: 8px; margin-top: 4px; }
+.modal-btn {
+  flex: 1; padding: 12px;
+  background: linear-gradient(180deg, #1e1200, #0f0800);
+  border: 1px solid var(--gold-d);
+  border-radius: 6px;
+  color: var(--gold);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px; letter-spacing: 2px;
+  cursor: pointer; transition: all 0.15s;
+}
+.modal-btn:hover { box-shadow: 0 0 15px rgba(255,215,0,0.2); border-color: var(--gold); }
+.modal-btn.secondary {
+  background: transparent;
+  border-color: rgba(255,215,0,0.2);
+  color: var(--gold-d);
+}
+.modal-btn.secondary:hover { border-color: var(--gold-d); color: var(--gold); }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center;
+  font-size: 7px; color: rgba(85,85,102,0.4);
+  letter-spacing: 1px; line-height: 2;
+  margin-top: 8px;
+}
+
+/* ── DEMO BADGE ── */
+.demo-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  background: rgba(255,215,0,0.04);
+  border: 1px solid rgba(255,215,0,0.12);
+  border-radius: 5px;
+  font-size: 8px; color: var(--gold-d); letter-spacing: 1px;
+}
+.demo-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: pulse 1.5s infinite; flex-shrink: 0; }
+
+/* Scrollbar global */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.2); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="pipe-h pipe-top"></div>
+<div class="pipe-h pipe-bot"></div>
+<div class="toast" id="toast"></div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-bg" id="successModal">
+  <div class="modal">
+    <div class="modal-icon">🐉</div>
+    <div class="modal-title">DAC ACQUIRED!</div>
+    <div class="modal-body" id="modalBody">
+      You received <span id="modalDac">0</span> DAC<br>
+      <span class="credit-span" id="modalCredits">0 credits</span> added to your game wallet.
+    </div>
+    <div class="modal-txid" id="modalTxid"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="goToGame()">▶ BACK TO SLOTS</button>
+      <button class="modal-btn secondary" onclick="closeModal()">STAY HERE</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <a class="header-back" href="index.html">← BACK TO MING'S FACTORY</a>
+    <div class="header-eyebrow">◈ AGACORPORATION // WEB3 PORTAL ◈</div>
+    <div class="header-title">DAC <span>HUB</span></div>
+    <div class="header-sub">DocAndroschCoin · Solana SPL · In-Game Credits</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TOKEN INFO -->
+  <div class="card">
+    <div class="card-title"><div class="dot"></div>TOKEN INFO</div>
+    <div class="token-row">
+      <div class="token-icon">🐉</div>
+      <div class="token-details">
+        <div class="token-name">DocAndroschCoin</div>
+        <div class="token-ticker">DAC · SOLANA SPL TOKEN</div>
+        <div class="token-addr">7FEUmYaUT1Ed6oFaRvrmpRr7YFg8DLjwxeX86qsx6TTK</div>
+      </div>
+      <a class="pump-link"
+         href="https://pump.fun/coin/7FEUmYaUT1Ed6oFaRvrmpRr7YFg8DLjwxeX86qsx6TTK"
+         target="_blank" rel="noopener">🚀 PUMP</a>
+    </div>
+  </div>
+
+  <!-- NETWORK BAR -->
+  <div class="network-bar">
+    <span>NETWORK</span>
+    <div class="net-pill sol"><div class="net-dot"></div>SOLANA MAINNET</div>
+    <span id="blockHeight">BLK —</span>
+  </div>
+
+  <!-- CONNECT WALLET -->
+  <div class="card">
+    <div class="card-title">
+      <div class="dot"></div>
+      CONNECT WALLET
+      <div style="margin-left:auto;">
+        <div class="status-badge disconnected" id="statusBadge">
+          <div class="badge-dot" id="badgeDot"></div>
+          <span id="statusText">DISCONNECTED</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wallet selection -->
+    <div id="walletSelection">
+      <div class="wallet-grid">
+
+        <!-- PHANTOM -->
+        <button class="wallet-btn phantom" onclick="connectPhantom()" id="phantomBtn">
+          <div class="wicon">
+            <svg width="26" height="26" viewBox="0 0 128 128">
+              <defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#534BB1"/><stop offset="100%" stop-color="#551BF9"/>
+              </linearGradient></defs>
+              <circle cx="64" cy="64" r="64" fill="url(#pg)"/>
+              <path d="M88 52H40c-4.4 0-8 3.6-8 8v28c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V60c0-4.4-3.6-8-8-8z" fill="white" opacity="0.9"/>
+              <circle cx="52" cy="72" r="6" fill="#9945FF"/>
+              <circle cx="52" cy="72" r="3" fill="white"/>
+              <path d="M64 62 Q80 60 82 72 Q82 80 70 80 Q60 82 58 74" fill="none" stroke="#9945FF" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="winfo">
+            <div class="wname">Phantom</div>
+            <div class="wdesc">SOLANA · BEST FOR DAC / SOL</div>
+          </div>
+          <div class="warrow">›</div>
+        </button>
+
+        <!-- METAMASK -->
+        <button class="wallet-btn metamask" onclick="connectMetaMask()" id="metamaskBtn">
+          <div class="wicon">
+            <svg width="26" height="26" viewBox="0 0 35 33">
+              <polygon points="32.9,1 19.7,10.7 22.1,5" fill="#E17726" stroke="#E17726" stroke-width="0.25"/>
+              <polygon points="2.7,1 15.8,10.8 13.5,5" fill="#E27625" stroke="#E27625" stroke-width="0.25"/>
+              <polygon points="28.2,23.5 24.7,28.9 32.2,31 34.4,23.7" fill="#E27625" stroke="#E27625" stroke-width="0.25"/>
+              <polygon points="1.3,23.7 3.4,31 10.9,28.9 7.4,23.5" fill="#E27625" stroke="#E27625" stroke-width="0.25"/>
+              <polygon points="10.5,14.5 8.4,17.7 15.8,18 15.6,9.9" fill="#E27625" stroke="#E27625" stroke-width="0.25"/>
+              <polygon points="25.1,14.5 20,9.8 19.9,18 27.2,17.7" fill="#E27625" stroke="#E27625" stroke-width="0.25"/>
+              <polygon points="10.9,28.9 15.4,26.7 11.5,23.7" fill="#E27625" stroke="#E27625" stroke-width="0.25"/>
+              <polygon points="20.2,26.7 24.7,28.9 23.1,23.7" fill="#E27625" stroke="#E27625" stroke-width="0.25"/>
+              <polygon points="24.7,28.9 20.2,26.7 20.6,30 20.5,31" fill="#D7C1B3" stroke="#D7C1B3" stroke-width="0.25"/>
+              <polygon points="10.9,28.9 15.1,31 14.9,30 15.4,26.7" fill="#D7C1B3" stroke="#D7C1B3" stroke-width="0.25"/>
+            </svg>
+          </div>
+          <div class="winfo">
+            <div class="wname">MetaMask</div>
+            <div class="wdesc">EVM · ETH · POLYGON · BSC</div>
+          </div>
+          <div class="warrow">›</div>
+        </button>
+
+        <!-- EXODUS -->
+        <button class="wallet-btn exodus" onclick="connectExodus()" id="exodusBtn">
+          <div class="wicon">
+            <svg width="26" height="26" viewBox="0 0 100 100">
+              <polygon points="50,5 95,30 95,70 50,95 5,70 5,30" fill="#00D2AA" opacity="0.9"/>
+              <polygon points="50,20 80,36 80,64 50,80 20,64 20,36" fill="#080A11"/>
+              <polygon points="50,35 65,43 65,57 50,65 35,57 35,43" fill="#00D2AA"/>
+            </svg>
+          </div>
+          <div class="winfo">
+            <div class="wname">Exodus</div>
+            <div class="wdesc">MULTI-CHAIN · SOL · ETH · BTC</div>
+          </div>
+          <div class="warrow">›</div>
+        </button>
+
+        <!-- TRUST -->
+        <button class="wallet-btn trust" onclick="connectTrust()" id="trustBtn">
+          <div class="wicon">
+            <svg width="26" height="26" viewBox="0 0 100 100">
+              <path d="M50 5 L90 20 L90 55 C90 75 70 90 50 95 C30 90 10 75 10 55 L10 20 Z" fill="#0500FF" opacity="0.8"/>
+              <path d="M50 20 L75 30 L75 55 C75 68 63 78 50 82 C37 78 25 68 25 55 L25 30 Z" fill="white" opacity="0.15"/>
+              <path d="M38 50 L46 58 L62 42" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="winfo">
+            <div class="wname">Trust Wallet</div>
+            <div class="wdesc">MULTI-CHAIN · SOL · EVM</div>
+          </div>
+          <div class="warrow">›</div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Connected Info -->
+    <div class="connected-panel" id="connectedPanel">
+      <div class="info-row">
+        <span class="info-label">WALLET</span>
+        <span class="info-value" id="connectedWalletType">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">ADDRESS</span>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="info-value address" id="connectedAddress">—</span>
+          <button class="copy-btn" onclick="copyAddress()" title="Copy">⎘</button>
+        </div>
+      </div>
+      <div class="info-row">
+        <span class="info-label">SOL BALANCE</span>
+        <span class="info-value green" id="solBalance">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">DAC BALANCE</span>
+        <span class="info-value" id="dacBalance">—</span>
+      </div>
+      <div class="info-row" style="border-color:rgba(0,243,255,0.15);">
+        <span class="info-label">GAME CREDITS</span>
+        <span class="info-value cyan" id="inGameCredits">—</span>
+      </div>
+      <button class="disconnect-btn" onclick="disconnectWallet()">◈ DISCONNECT WALLET ◈</button>
+    </div>
+  </div>
+
+  <!-- DAC EXCHANGE -->
+  <div class="card">
+    <div class="card-title"><div class="dot"></div>BUY DocAndroschCoin</div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <div class="rate-banner">
+        <div class="rate-main">1 SOL = 10,000 DAC</div>
+        <div class="rate-sub">1 DAC = 1 IN-GAME CREDIT</div>
+        <div class="rate-live">● LIVE RATE</div>
+      </div>
+
+      <div class="demo-badge" id="demoBadge">
+        <div class="demo-dot"></div>
+        <span>DEMO MODE — Connect wallet &amp; set treasury address to go live</span>
+      </div>
+
+      <div>
+        <div class="input-label">
+          <span>SOL AMOUNT</span>
+          <span class="input-balance" id="maxSolLabel">BALANCE: — SOL</span>
+        </div>
+        <div class="amount-wrap">
+          <input class="amount-input" type="number" id="solInput"
+            placeholder="0.00" min="0.001" step="0.001"
+            oninput="updatePreview()" />
+          <div class="currency-tag">SOL</div>
+        </div>
+        <div class="quick-row">
+          <button class="quick-btn" onclick="setQuick(0.01)">0.01</button>
+          <button class="quick-btn" onclick="setQuick(0.05)">0.05</button>
+          <button class="quick-btn" onclick="setQuick(0.1)">0.1</button>
+          <button class="quick-btn" onclick="setQuick(0.5)">0.5</button>
+          <button class="quick-btn" onclick="setQuick(1)">1 SOL</button>
+        </div>
+      </div>
+
+      <div class="dac-preview">
+        <div class="dac-preview-left">
+          <div class="dac-preview-label">YOU RECEIVE</div>
+          <div class="dac-preview-val" id="dacPreview">0</div>
+          <div class="dac-preview-unit">DocAndroschCoin (DAC)</div>
+        </div>
+        <div class="credits-preview">
+          <div class="credits-val" id="creditsPreview">0</div>
+          <div class="credits-lbl">IN-GAME CREDITS</div>
+        </div>
+      </div>
+
+      <button class="buy-btn" id="buyBtn" onclick="buyDAC()" disabled>
+        ⚙ BUY DAC ⚙
+      </button>
+    </div>
+  </div>
+
+  <!-- TX HISTORY -->
+  <div class="card">
+    <div class="card-title"><div class="dot"></div>TRANSACTION HISTORY</div>
+    <div class="tx-list" id="txList">
+      <div class="no-tx">NO TRANSACTIONS YET · CONNECT WALLET TO START</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    ◈ AGACORPORATION · WEB3 DIVISION ◈<br>
+    ALL DAC PURCHASES ARE FINAL · MING WATCHES ALL<br>
+    NOT FINANCIAL ADVICE · FOR ENTERTAINMENT PURPOSES
+  </div>
+
+</div><!-- /page -->
+
+<script>
+/* ═══════════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════════ */
+const DAC_MINT       = '7FEUmYaUT1Ed6oFaRvrmpRr7YFg8DLjwxeX86qsx6TTK';
+const GAME_WALLET    = 'YOUR_GAME_TREASURY_WALLET_ADDRESS_HERE'; // set to enable real txs
+const DAC_PER_SOL    = 10000;
+const CREDITS_PER_DAC= 1;
+const SOL_RPC        = 'https://api.mainnet-beta.solana.com';
+
+/* ─── STATE ─── */
+let wallet = {
+  connected: false, type: null, address: null,
+  solBalance: 0, dacBalance: 0, provider: null,
+  inGameCredits: parseInt(localStorage.getItem('jli_credits') || '1000')
+};
+let txHistory = JSON.parse(localStorage.getItem('jli_txHistory') || '[]');
+
+/* ═══════════════════════════════════════════════════
+   WALLET CONNECTIONS
+═══════════════════════════════════════════════════ */
+async function connectPhantom() {
+  const ph = window?.phantom?.solana || window?.solana;
+  if (!ph?.isPhantom) {
+    showToast('Phantom not found — install at phantom.app', 'err');
+    window.open('https://phantom.app/', '_blank');
+    return;
+  }
+  setBadge('connecting', 'CONNECTING...');
+  try {
+    const resp = await ph.connect();
+    wallet.address = resp.publicKey.toString();
+    wallet.type = 'Phantom';
+    wallet.provider = ph;
+    wallet.connected = true;
+    await loadBalances();
+    onWalletConnected();
+    showToast('Phantom connected!', 'ok');
+  } catch(e) {
+    setBadge('disconnected', 'DISCONNECTED');
+    showToast('Connection cancelled', 'err');
+  }
+}
+
+async function connectMetaMask() {
+  const mm = window?.ethereum;
+  if (!mm) {
+    showToast('MetaMask not found — install at metamask.io', 'err');
+    window.open('https://metamask.io/', '_blank');
+    return;
+  }
+  setBadge('connecting', 'CONNECTING...');
+  try {
+    const accounts = await mm.request({ method: 'eth_requestAccounts' });
+    wallet.address = accounts[0];
+    wallet.type = 'MetaMask (EVM)';
+    wallet.provider = mm;
+    wallet.connected = true;
+    wallet.solBalance = '— (EVM)';
+    wallet.dacBalance = '0.00';
+    onWalletConnected();
+    showToast('MetaMask connected!', 'ok');
+  } catch(e) {
+    setBadge('disconnected', 'DISCONNECTED');
+    showToast('Connection rejected', 'err');
+  }
+}
+
+async function connectExodus() {
+  const ex = window?.exodus?.solana || window?.exodus?.ethereum || window?.solana;
+  if (!ex) {
+    showToast('Exodus not found — install at exodus.com', 'err');
+    window.open('https://www.exodus.com/', '_blank');
+    return;
+  }
+  setBadge('connecting', 'CONNECTING...');
+  try {
+    if (ex.isPhantom || ex.isSolana) {
+      const resp = await ex.connect();
+      wallet.address = resp.publicKey.toString();
+      wallet.type = 'Exodus (SOL)';
+      wallet.provider = ex;
+      await loadBalances();
+    } else {
+      const accounts = await ex.request({ method: 'eth_requestAccounts' });
+      wallet.address = accounts[0];
+      wallet.type = 'Exodus (EVM)';
+      wallet.solBalance = '— (EVM)';
+      wallet.dacBalance = '0.00';
+    }
+    wallet.connected = true;
+    onWalletConnected();
+    showToast('Exodus connected!', 'ok');
+  } catch(e) {
+    setBadge('disconnected', 'DISCONNECTED');
+    showToast('Connection failed', 'err');
+  }
+}
+
+async function connectTrust() {
+  const tw = window?.trustwallet?.solana || window?.solana || window?.ethereum;
+  if (!tw) {
+    showToast('Trust Wallet not found — install at trustwallet.com', 'err');
+    window.open('https://trustwallet.com/', '_blank');
+    return;
+  }
+  setBadge('connecting', 'CONNECTING...');
+  try {
+    if (tw.isSolana || tw.isPhantom) {
+      const resp = await tw.connect();
+      wallet.address = resp.publicKey.toString();
+      wallet.type = 'Trust Wallet (SOL)';
+      wallet.provider = tw;
+      await loadBalances();
+    } else {
+      const accounts = await tw.request({ method: 'eth_requestAccounts' });
+      wallet.address = accounts[0];
+      wallet.type = 'Trust Wallet (EVM)';
+      wallet.solBalance = '— (EVM)';
+      wallet.dacBalance = '0.00';
+    }
+    wallet.connected = true;
+    onWalletConnected();
+    showToast('Trust Wallet connected!', 'ok');
+  } catch(e) {
+    setBadge('disconnected', 'DISCONNECTED');
+    showToast('Connection failed', 'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   BALANCES
+═══════════════════════════════════════════════════ */
+async function loadBalances() {
+  if (!wallet.address) return;
+  try {
+    const solResp = await fetch(SOL_RPC, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'getBalance', params:[wallet.address] })
+    });
+    const solData = await solResp.json();
+    wallet.solBalance = ((solData.result?.value || 0) / 1e9).toFixed(4);
+
+    const tokenResp = await fetch(SOL_RPC, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        jsonrpc:'2.0', id:2, method:'getTokenAccountsByOwner',
+        params:[ wallet.address, { mint: DAC_MINT }, { encoding:'jsonParsed' } ]
+      })
+    });
+    const tokenData = await tokenResp.json();
+    const accounts = tokenData.result?.value || [];
+    wallet.dacBalance = accounts.length > 0
+      ? parseFloat(accounts[0].account.data.parsed.info.tokenAmount.uiAmount || 0).toFixed(2)
+      : '0.00';
+  } catch(e) {
+    wallet.solBalance = '?'; wallet.dacBalance = '?';
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   ON CONNECTED
+═══════════════════════════════════════════════════ */
+function onWalletConnected() {
+  setBadge('connected', 'CONNECTED');
+  document.getElementById('walletSelection').style.display = 'none';
+  document.getElementById('connectedPanel').classList.add('show');
+  document.getElementById('connectedAddress').textContent = wallet.address;
+  document.getElementById('connectedWalletType').textContent = wallet.type;
+  document.getElementById('solBalance').textContent =
+    typeof wallet.solBalance === 'string' && wallet.solBalance.includes('—')
+      ? wallet.solBalance : wallet.solBalance + ' SOL';
+  document.getElementById('dacBalance').textContent = wallet.dacBalance + ' DAC';
+  document.getElementById('inGameCredits').textContent = wallet.inGameCredits.toLocaleString() + ' CREDITS';
+  document.getElementById('maxSolLabel').textContent =
+    'BALANCE: ' + (typeof wallet.solBalance === 'string' ? wallet.solBalance : wallet.solBalance + ' SOL');
+  document.getElementById('buyBtn').disabled = false;
+  fetchBlockHeight();
+  renderTxHistory();
+}
+
+/* ═══════════════════════════════════════════════════
+   DISCONNECT
+═══════════════════════════════════════════════════ */
+async function disconnectWallet() {
+  try { if (wallet.provider?.disconnect) await wallet.provider.disconnect(); } catch(e) {}
+  wallet = { ...wallet, connected:false, type:null, address:null, solBalance:0, dacBalance:0, provider:null };
+  setBadge('disconnected', 'DISCONNECTED');
+  document.getElementById('walletSelection').style.display = 'block';
+  document.getElementById('connectedPanel').classList.remove('show');
+  document.getElementById('buyBtn').disabled = true;
+  showToast('Wallet disconnected', 'info');
+}
+
+/* ═══════════════════════════════════════════════════
+   BUY DAC
+═══════════════════════════════════════════════════ */
+async function buyDAC() {
+  const solAmount = parseFloat(document.getElementById('solInput').value);
+  if (!solAmount || solAmount < 0.001) { showToast('Minimum: 0.001 SOL', 'err'); return; }
+  if (!wallet.connected) { showToast('Connect wallet first!', 'err'); return; }
+
+  const dacAmount     = Math.floor(solAmount * DAC_PER_SOL);
+  const creditsAmount = dacAmount * CREDITS_PER_DAC;
+
+  if (GAME_WALLET === 'YOUR_GAME_TREASURY_WALLET_ADDRESS_HERE') {
+    await simulateTransaction(solAmount, dacAmount, creditsAmount);
+    return;
+  }
+
+  const btn = document.getElementById('buyBtn');
+  btn.disabled = true;
+  btn.classList.add('processing');
+  btn.textContent = 'PROCESSING...';
+
+  try {
+    let txSig;
+    const solType = wallet.type === 'Phantom' || wallet.type === 'Exodus (SOL)' || wallet.type === 'Trust Wallet (SOL)';
+    if (solType) {
+      txSig = await sendSolTransaction(solAmount);
+    } else {
+      showToast('EVM wallet: Bridge SOL to Solana first', 'info');
+      btn.disabled = false; btn.classList.remove('processing'); btn.textContent = '⚙ BUY DAC ⚙';
+      return;
+    }
+
+    wallet.inGameCredits += creditsAmount;
+    wallet.dacBalance = (parseFloat(wallet.dacBalance) + dacAmount).toFixed(2);
+    localStorage.setItem('jli_credits', wallet.inGameCredits);
+    addTx({ type:'success', desc:`Bought ${dacAmount.toLocaleString()} DAC`,
+      meta:`${solAmount} SOL · ${new Date().toLocaleTimeString()}`,
+      dacAmt:`+${dacAmount.toLocaleString()} DAC`, solAmt:`-${solAmount} SOL`, txSig });
+    updateConnectedUI();
+    showSuccessModal(dacAmount, creditsAmount, txSig);
+
+  } catch(e) {
+    addTx({ type:'failed', desc:`Failed: ${solAmount} SOL`,
+      meta:`${new Date().toLocaleTimeString()} · ${e.message?.slice(0,40) || 'User rejected'}`,
+      dacAmt:'0 DAC', solAmt:`${solAmount} SOL` });
+    showToast('Transaction failed: ' + (e.message?.slice(0,30) || 'rejected'), 'err');
+  } finally {
+    btn.disabled = false; btn.classList.remove('processing'); btn.textContent = '⚙ BUY DAC ⚙';
+    await loadBalances();
+    updateConnectedUI();
+  }
+}
+
+async function sendSolTransaction(solAmount) {
+  const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = solanaWeb3;
+  const connection  = new Connection(SOL_RPC, 'confirmed');
+  const fromPubkey  = new PublicKey(wallet.address);
+  const toPubkey    = new PublicKey(GAME_WALLET);
+  const lamports    = Math.round(solAmount * LAMPORTS_PER_SOL);
+  const { blockhash } = await connection.getRecentBlockhash();
+  const tx = new Transaction({ recentBlockhash: blockhash, feePayer: fromPubkey })
+    .add(SystemProgram.transfer({ fromPubkey, toPubkey, lamports }));
+  const { signature } = await wallet.provider.signAndSendTransaction(tx);
+  await connection.confirmTransaction(signature);
+  return signature;
+}
+
+async function simulateTransaction(solAmount, dacAmount, creditsAmount) {
+  const btn = document.getElementById('buyBtn');
+  btn.disabled = true; btn.classList.add('processing'); btn.textContent = 'SIMULATING...';
+  showToast('DEMO MODE — simulating transaction...', 'info');
+  await delay(1600);
+
+  wallet.inGameCredits += creditsAmount;
+  localStorage.setItem('jli_credits', wallet.inGameCredits);
+
+  const fakeSig = 'DEMO' + Math.random().toString(36).slice(2,10).toUpperCase() +
+                  Math.random().toString(36).slice(2,10).toUpperCase();
+  addTx({ type:'success', desc:`[DEMO] Bought ${dacAmount.toLocaleString()} DAC`,
+    meta:`${solAmount} SOL simulated · ${new Date().toLocaleTimeString()}`,
+    dacAmt:`+${dacAmount.toLocaleString()} DAC`, solAmt:`-${solAmount} SOL`, txSig: fakeSig });
+
+  if (wallet.connected) updateConnectedUI();
+  showSuccessModal(dacAmount, creditsAmount, fakeSig, true);
+  btn.disabled = false; btn.classList.remove('processing'); btn.textContent = '⚙ BUY DAC ⚙';
+}
+
+/* ─── SUCCESS MODAL ─── */
+function showSuccessModal(dacAmount, creditsAmount, txSig, isDemo=false) {
+  document.getElementById('modalDac').textContent = dacAmount.toLocaleString();
+  document.getElementById('modalCredits').textContent = creditsAmount.toLocaleString() + ' in-game credits';
+  document.getElementById('modalTxid').textContent =
+    isDemo ? `[DEMO TX]: ${txSig}` : txSig ? `TX: ${txSig.slice(0,20)}…` : '';
+  document.getElementById('successModal').classList.add('open');
+}
+function closeModal() { document.getElementById('successModal').classList.remove('open'); }
+function goToGame()   { window.location.href = 'index.html'; }
+
+/* ═══════════════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════════════ */
+function updatePreview() {
+  const sol = parseFloat(document.getElementById('solInput').value) || 0;
+  const dac = Math.floor(sol * DAC_PER_SOL);
+  document.getElementById('dacPreview').textContent = dac.toLocaleString();
+  document.getElementById('creditsPreview').textContent = (dac * CREDITS_PER_DAC).toLocaleString();
+}
+
+function setQuick(amount) {
+  document.getElementById('solInput').value = amount;
+  updatePreview();
+  document.querySelectorAll('.quick-btn').forEach(b =>
+    b.classList.toggle('active', parseFloat(b.textContent) === amount || b.textContent === amount + ' SOL'));
+}
+
+function updateConnectedUI() {
+  if (!wallet.connected) return;
+  document.getElementById('solBalance').textContent = wallet.solBalance + ' SOL';
+  document.getElementById('dacBalance').textContent = wallet.dacBalance + ' DAC';
+  document.getElementById('inGameCredits').textContent = wallet.inGameCredits.toLocaleString() + ' CREDITS';
+}
+
+function setBadge(state, text) {
+  const badge = document.getElementById('statusBadge');
+  const dot   = document.getElementById('badgeDot');
+  badge.className = 'status-badge ' + state;
+  dot.className   = 'badge-dot' + (state === 'connected' ? ' live' : '');
+  document.getElementById('statusText').textContent = text;
+}
+
+function copyAddress() {
+  if (!wallet.address) return;
+  navigator.clipboard.writeText(wallet.address)
+    .then(() => showToast('Address copied!', 'ok'))
+    .catch(() => showToast('Copy failed', 'err'));
+}
+
+/* ─── TX HISTORY ─── */
+function addTx(tx) {
+  txHistory.unshift({ ...tx, id: Date.now() });
+  if (txHistory.length > 20) txHistory.pop();
+  localStorage.setItem('jli_txHistory', JSON.stringify(txHistory));
+  renderTxHistory();
+}
+
+function renderTxHistory() {
+  const list = document.getElementById('txList');
+  if (!txHistory.length) {
+    list.innerHTML = '<div class="no-tx">NO TRANSACTIONS YET · CONNECT WALLET TO START</div>';
+    return;
+  }
+  list.innerHTML = txHistory.slice(0,8).map(tx => `
+    <div class="tx-item">
+      <div class="tx-icon ${tx.type}">${tx.type==='success'?'✓':tx.type==='pending'?'⏳':'✗'}</div>
+      <div class="tx-details">
+        <div class="tx-desc">${tx.desc}</div>
+        <div class="tx-meta">${tx.meta}${tx.txSig && !tx.txSig.startsWith('DEMO')
+          ? ` · <a href="https://solscan.io/tx/${tx.txSig}" target="_blank" style="color:var(--blue);text-decoration:none;">${tx.txSig.slice(0,8)}…</a>`
+          : ''}</div>
+      </div>
+      <div class="tx-amounts">
+        <div class="tx-dac">${tx.dacAmt}</div>
+        <div class="tx-sol">${tx.solAmt}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ─── BLOCK HEIGHT ─── */
+async function fetchBlockHeight() {
+  try {
+    const r = await fetch(SOL_RPC, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ jsonrpc:'2.0', id:1, method:'getBlockHeight' })
+    });
+    const d = await r.json();
+    document.getElementById('blockHeight').textContent =
+      'BLK #' + (d.result || '—').toLocaleString();
+  } catch(e) { document.getElementById('blockHeight').textContent = 'RPC ERR'; }
+}
+
+/* ─── TOAST ─── */
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3200);
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+renderTxHistory();
+fetchBlockHeight();
+setInterval(fetchBlockHeight, 30000);
+
+window.addEventListener('load', async () => {
+  const ph = window?.phantom?.solana || window?.solana;
+  if (ph?.isPhantom && ph.isConnected) {
+    try {
+      wallet.provider = ph;
+      wallet.address = ph.publicKey.toString();
+      wallet.type = 'Phantom';
+      wallet.connected = true;
+      await loadBalances();
+      onWalletConnected();
+      showToast('Phantom auto-reconnected', 'ok');
+    } catch(e) {}
+  }
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
