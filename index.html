@@ -163,6 +163,29 @@
       background: rgba(255,215,0,0.12);
       box-shadow: 0 0 10px rgba(255,215,0,0.2);
     }
+    #user-bar {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 3px;
+    }
+    #user-avatar {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 1px solid rgba(255,215,0,0.3);
+      object-fit: cover;
+    }
+    #user-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px; letter-spacing: 1px;
+      color: rgba(255,215,0,0.6);
+      max-width: 90px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    #logout-btn {
+      color: rgba(255,34,68,0.5);
+      font-size: 13px; text-decoration: none;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    #logout-btn:hover { color: #ff2244; }
 
     /* STATUS TICKER */
     #ticker {
@@ -497,6 +520,11 @@
       <div class="hdr-sub2">JIN LING INTERPLANETARY · SPIN TO PRODUCE</div>
     </div>
     <div class="hdr-right">
+      <div id="user-bar">
+        <img id="user-avatar" src="" alt="" style="display:none">
+        <span id="user-name"></span>
+        <a href="/api/logout" id="logout-btn" title="Log Out">⏻</a>
+      </div>
       <div class="bal-lbl">DAC</div>
       <div class="bal-val" id="bal">1000</div>
       <a href="dac-hub.html" id="dac-hub-btn" title="Buy DAC — In-Game Currency">🐉 DAC HUB</a>
@@ -1071,6 +1099,26 @@ function buildPaytable() {
 }
 
 // ═══════════════════════════════════════════════════
+//  USER INFO
+// ═══════════════════════════════════════════════════
+async function loadUser() {
+  try {
+    const resp = await fetch('/api/me');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!data.authenticated || !data.user) return;
+    const u = data.user;
+    const name = u.firstName || u.email?.split('@')[0] || 'DROID';
+    document.getElementById('user-name').textContent = name.toUpperCase();
+    if (u.profileImageUrl) {
+      const av = document.getElementById('user-avatar');
+      av.src = u.profileImageUrl;
+      av.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
 function init() {
@@ -1079,6 +1127,7 @@ function init() {
   updateUI();
   rotTick();
   setTimeout(ambSparks, 3000);
+  loadUser();
 }
 init();
 </script>

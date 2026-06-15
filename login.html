@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ACCESS CONTROL — Ming's Factory</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:    #ffd700;
+  --gold-d:  #b8860b;
+  --red:     #ff2244;
+  --cyan:    #00f3ff;
+  --green:   #00ff88;
+  --dark:    #050508;
+  --panel:   #0d0d18;
+  --card:    #0a0a14;
+  --border:  rgba(255,215,0,0.15);
+  --muted:   #556;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  height: 100%;
+  background: var(--dark);
+  font-family: 'Share Tech Mono', monospace;
+  color: #ccd;
+  overflow: hidden;
+}
+
+/* ── BACKGROUND ── */
+.bg {
+  position: fixed; inset: 0; z-index: 0;
+  background: url('assets/IMG_0105.jpg') center center / cover no-repeat;
+  filter: brightness(0.18) saturate(1.5) hue-rotate(180deg);
+}
+.bg-overlay {
+  position: fixed; inset: 0; z-index: 1;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,34,68,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 50% 0%,   rgba(0,10,30,0.92) 0%, transparent 80%),
+    repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,243,255,0.008) 3px, rgba(0,243,255,0.008) 4px);
+}
+
+/* Scanlines */
+.scanlines {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+}
+
+/* Pipe decorations */
+.pipe {
+  position: fixed; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, #1e1e3a 0%, #0d0d1f 100%);
+}
+.pipe-top { top:0; left:0; right:0; height:10px; border-bottom:1px solid #333355; }
+.pipe-bot { bottom:0; left:0; right:0; height:10px; border-top:1px solid #333355; }
+.pipe-l   { top:0; bottom:0; left:0; width:10px; border-right:1px solid #333355; }
+.pipe-r   { top:0; bottom:0; right:0; width:10px; border-left:1px solid #333355; }
+
+/* ── LAYOUT ── */
+.page {
+  position: relative; z-index: 10;
+  height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+
+/* ── CARD ── */
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 40px 36px;
+  width: 100%; max-width: 400px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: cardIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:
+    0 0 40px rgba(255,215,0,0.06),
+    0 0 80px rgba(255,34,68,0.04),
+    inset 0 1px 0 rgba(255,215,0,0.1);
+}
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(30px) scale(0.96); }
+  to   { opacity:1; transform:none; }
+}
+
+/* Card top accent line */
+.login-card::before {
+  content: ''; position: absolute; top:0; left:10%; right:10%; height:1px;
+  background: linear-gradient(90deg, transparent, var(--gold-d), var(--gold), var(--red), var(--gold), var(--gold-d), transparent);
+}
+/* Card glow corners */
+.login-card::after {
+  content: ''; position: absolute; inset:0; border-radius:14px;
+  background: radial-gradient(ellipse 60% 30% at 50% 0%, rgba(255,215,0,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ── LOGO AREA ── */
+.corp-tag {
+  font-size: 8px; letter-spacing: 4px; color: var(--muted);
+  margin-bottom: 8px;
+}
+.logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 36px; font-weight: 900; letter-spacing: 4px;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(255,215,0,0.5), 0 0 60px rgba(255,215,0,0.2);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.logo span { color: var(--red); text-shadow: 0 0 20px var(--red); }
+.logo-sub {
+  font-size: 8px; letter-spacing: 2px; color: var(--muted);
+  margin-bottom: 24px;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-d), var(--red), var(--gold-d), transparent);
+  position: relative; margin: 0 0 24px;
+}
+.divider::before {
+  content: '⬟'; position: absolute; left:50%; top:50%;
+  transform: translate(-50%, -50%);
+  font-size: 9px; color: var(--gold);
+  background: var(--card); padding: 0 6px;
+}
+
+/* ── ACCESS BADGE ── */
+.access-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255,34,68,0.06);
+  border: 1px solid rgba(255,34,68,0.25);
+  border-radius: 20px;
+  font-size: 8px; letter-spacing: 2px; color: var(--red);
+  margin-bottom: 20px;
+  animation: badgePulse 2s infinite;
+}
+@keyframes badgePulse {
+  0%, 100% { border-color: rgba(255,34,68,0.25); }
+  50%       { border-color: rgba(255,34,68,0.6); box-shadow: 0 0 10px rgba(255,34,68,0.15); }
+}
+.badge-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--red);
+  animation: pulse 1s infinite;
+}
+@keyframes pulse { 50% { opacity:0.3; } }
+
+/* ── COPY ── */
+.access-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px; letter-spacing: 3px; color: var(--gold);
+  margin-bottom: 8px;
+}
+.access-desc {
+  font-size: 10px; color: var(--muted); line-height: 1.7;
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
+}
+.access-desc em { color: rgba(255,215,0,0.5); font-style: normal; }
+
+/* ── LOGIN BUTTON ── */
+.login-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; height: 58px;
+  background: linear-gradient(180deg, #1a1000, #0d0800);
+  border: 1px solid var(--gold-d);
+  border-radius: 8px;
+  color: var(--gold);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: 3px;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255,215,0,0.1);
+  margin-bottom: 12px;
+}
+.login-btn::before {
+  content: ''; position: absolute; top:0; left:15%; right:15%; height:1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.login-btn::after {
+  content: ''; position: absolute; inset:0;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.06), transparent);
+  transform: translateX(-100%); transition: transform 0.5s;
+}
+.login-btn:hover::after { transform: translateX(100%); }
+.login-btn:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 25px rgba(255,215,0,0.2), inset 0 0 20px rgba(255,215,0,0.05);
+}
+.login-btn:active { transform: scale(0.98); }
+
+/* Replit logo inside button */
+.replit-icon {
+  width: 22px; height: 22px; flex-shrink: 0;
+}
+
+/* ── FEATURES ── */
+.features {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+.feature {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 9px; color: var(--muted); letter-spacing: 1px;
+}
+.feature-icon { font-size: 11px; flex-shrink: 0; }
+
+/* ── FOOTER ── */
+.card-footer {
+  font-size: 7px; color: rgba(85,85,102,0.45);
+  letter-spacing: 1px; line-height: 2;
+}
+
+/* ── GUARDS (corners) ── */
+.corner {
+  position: fixed; z-index: 9;
+  font-size: 28px; opacity: 0.12;
+  pointer-events: none;
+  animation: guardBreathe 4s ease-in-out infinite;
+}
+@keyframes guardBreathe {
+  0%,100% { opacity:0.10; } 50% { opacity:0.18; }
+}
+.corner-tl { top: 30px; left: 30px; }
+.corner-tr { top: 30px; right:30px; }
+.corner-bl { bottom:30px; left:30px; }
+.corner-br { bottom:30px; right:30px; }
+
+/* ── SPARKS ── */
+#sparks {
+  position: fixed; inset:0; z-index:4; pointer-events:none; overflow:hidden;
+}
+.spark {
+  position: absolute; width:3px; height:3px; border-radius:50%;
+  background: #ff6600; box-shadow:0 0 5px #ff6600;
+  animation: sparkFly 1s ease-out forwards;
+}
+@keyframes sparkFly {
+  0%   { transform:translate(0,0) scale(1); opacity:1; }
+  100% { transform:translate(var(--sx),var(--sy)) scale(0); opacity:0; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="bg-overlay"></div>
+<div class="scanlines"></div>
+
+<div class="pipe pipe-top"></div>
+<div class="pipe pipe-bot"></div>
+<div class="pipe pipe-l"></div>
+<div class="pipe pipe-r"></div>
+
+<div id="sparks"></div>
+
+<div class="corner corner-tl">⚙</div>
+<div class="corner corner-tr">⚙</div>
+<div class="corner corner-bl">🤖</div>
+<div class="corner corner-br">🤖</div>
+
+<div class="page">
+  <div class="login-card">
+
+    <!-- Logo -->
+    <div class="corp-tag">◈ AGACORPORATION // SECTOR 7 ◈</div>
+    <div class="logo">MING'S <span>FACTORY</span></div>
+    <div class="logo-sub">JIN LING INTERPLANETARY · SPIN TO PRODUCE</div>
+
+    <div class="divider"></div>
+
+    <!-- Access badge -->
+    <div class="access-badge">
+      <div class="badge-dot"></div>
+      IDENTITY VERIFICATION REQUIRED
+    </div>
+
+    <div class="access-title">WORKER CLEARANCE</div>
+    <div class="access-desc">
+      All droid units must verify identity<br>
+      before accessing the <em>Jin-Ling Gold</em> facility.<br>
+      Unauthorized access is punishable by Ming.
+    </div>
+
+    <!-- Features -->
+    <div class="features">
+      <div class="feature"><span class="feature-icon">🐉</span><span>Access Jin-Ling Gold Slot Machine</span></div>
+      <div class="feature"><span class="feature-icon">💰</span><span>Buy & spend DocAndroschCoin (DAC)</span></div>
+      <div class="feature"><span class="feature-icon">🔗</span><span>Connect your Web3 wallet</span></div>
+      <div class="feature"><span class="feature-icon">🔒</span><span>Secure login via Replit — no password needed</span></div>
+    </div>
+
+    <!-- Login Button -->
+    <a class="login-btn" href="/api/login">
+      <svg class="replit-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z" fill="#F26207" opacity="0.9"/>
+      </svg>
+      LOG IN WITH REPLIT
+    </a>
+
+    <div class="card-footer">
+      SUPPORTS: GOOGLE · GITHUB · X · APPLE · EMAIL<br>
+      ◈ AGACORPORATION · ALL DROIDS MUST COMPLY ◈
+    </div>
+
+  </div>
+</div>
+
+<script>
+function spawnSpark() {
+  const c = document.getElementById('sparks');
+  const positions = [[15,85],[85,15],[50,90],[20,20],[80,80]];
+  const [l,t] = positions[Math.floor(Math.random()*positions.length)];
+  for(let i=0;i<6;i++){
+    const sp = document.createElement('div');
+    sp.className='spark';
+    const ang=Math.random()*Math.PI*2, dist=15+Math.random()*40;
+    sp.style.left=l+'%'; sp.style.top=t+'%';
+    sp.style.setProperty('--sx',Math.cos(ang)*dist+'px');
+    sp.style.setProperty('--sy',Math.sin(ang)*dist+'px');
+    sp.style.animationDelay=Math.random()*0.3+'s';
+    c.appendChild(sp);
+    setTimeout(()=>sp.remove(),1200);
+  }
+}
+setInterval(spawnSpark, 3000 + Math.random()*4000);
+setTimeout(spawnSpark, 800);
+</script>
+</body>
+</html>
