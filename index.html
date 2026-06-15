@@ -705,9 +705,9 @@ let G = {
   spinning: false,
   freeSpins: 0,
   inFree:   false,
-  totalWon: 0,
-  spins:    0,
-  bigWins:  0,
+  totalWon: parseInt(localStorage.getItem('jli_totalWon') || '0'),
+  spins:    parseInt(localStorage.getItem('jli_spins') || '0'),
+  bigWins:  parseInt(localStorage.getItem('jli_bigWins') || '0'),
   grid:     [], // [reel][row] sym
 };
 
@@ -1056,7 +1056,43 @@ function updateUI() {
   document.getElementById('st-spins').textContent = G.spins.toLocaleString();
   document.getElementById('st-bw').textContent    = G.bigWins.toLocaleString();
   document.getElementById('fs-count').textContent = G.freeSpins;
-  localStorage.setItem('jli_credits', G.balance);
+  localStorage.setItem('jli_credits',  G.balance);
+  localStorage.setItem('jli_totalWon', G.totalWon);
+  localStorage.setItem('jli_spins',    G.spins);
+  localStorage.setItem('jli_bigWins',  G.bigWins);
+  scheduleSave();
+}
+
+// ── SERVER PERSISTENCE ──────────────────────────────
+let _saveTimer = null;
+function scheduleSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveStateToServer, 900);
+}
+async function saveStateToServer() {
+  try {
+    await fetch('/api/game/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dacBalance: G.balance, totalWon: G.totalWon, spins: G.spins, bigWins: G.bigWins }),
+    });
+  } catch(e) {}
+}
+async function loadGameState() {
+  try {
+    const r = await fetch('/api/game/state');
+    if (!r.ok) return;
+    const s = await r.json();
+    G.balance  = s.dacBalance;
+    G.totalWon = s.totalWon;
+    G.spins    = s.spins;
+    G.bigWins  = s.bigWins;
+    localStorage.setItem('jli_credits',  G.balance);
+    localStorage.setItem('jli_totalWon', G.totalWon);
+    localStorage.setItem('jli_spins',    G.spins);
+    localStorage.setItem('jli_bigWins',  G.bigWins);
+    updateUI();
+  } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════
@@ -1128,6 +1164,7 @@ function init() {
   rotTick();
   setTimeout(ambSparks, 3000);
   loadUser();
+  loadGameState();
 }
 init();
 </script>

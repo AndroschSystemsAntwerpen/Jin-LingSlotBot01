@@ -830,7 +830,7 @@ const SOL_RPC        = 'https://api.mainnet-beta.solana.com';
 let wallet = {
   connected: false, type: null, address: null,
   solBalance: 0, dacBalance: 0, provider: null,
-  inGameCredits: parseInt(localStorage.getItem('jli_credits') || '1000')
+  inGameCredits: parseInt(localStorage.getItem('jli_credits') || '0')
 };
 let txHistory = JSON.parse(localStorage.getItem('jli_txHistory') || '[]');
 
@@ -1042,9 +1042,8 @@ async function buyDAC() {
       return;
     }
 
-    wallet.inGameCredits += creditsAmount;
     wallet.dacBalance = (parseFloat(wallet.dacBalance) + dacAmount).toFixed(2);
-    localStorage.setItem('jli_credits', wallet.inGameCredits);
+    await serverPurchase(dacAmount, solAmount, txSig, false);
     addTx({ type:'success', desc:`Bought ${dacAmount.toLocaleString()} DAC`,
       meta:`${solAmount} SOL · ${new Date().toLocaleTimeString()}`,
       dacAmt:`+${dacAmount.toLocaleString()} DAC`, solAmt:`-${solAmount} SOL`, txSig });
@@ -1083,11 +1082,10 @@ async function simulateTransaction(solAmount, dacAmount, creditsAmount) {
   showToast('DEMO MODE — simulating transaction...', 'info');
   await delay(1600);
 
-  wallet.inGameCredits += creditsAmount;
-  localStorage.setItem('jli_credits', wallet.inGameCredits);
-
   const fakeSig = 'DEMO' + Math.random().toString(36).slice(2,10).toUpperCase() +
                   Math.random().toString(36).slice(2,10).toUpperCase();
+
+  await serverPurchase(dacAmount, solAmount, fakeSig, true);
   addTx({ type:'success', desc:`[DEMO] Bought ${dacAmount.toLocaleString()} DAC`,
     meta:`${solAmount} SOL simulated · ${new Date().toLocaleTimeString()}`,
     dacAmt:`+${dacAmount.toLocaleString()} DAC`, solAmt:`-${solAmount} SOL`, txSig: fakeSig });
@@ -1191,6 +1189,60 @@ async function fetchBlockHeight() {
   } catch(e) { document.getElementById('blockHeight').textContent = 'RPC ERR'; }
 }
 
+/* ═══════════════════════════════════════════════════
+   SERVER SYNC
+═══════════════════════════════════════════════════ */
+async function loadServerState() {
+  try {
+    const r = await fetch('/api/game/state');
+    if (!r.ok) return;
+    const s = await r.json();
+    wallet.inGameCredits = s.dacBalance;
+    localStorage.setItem('jli_credits', s.dacBalance);
+    if (wallet.connected) updateConnectedUI();
+    else document.getElementById('inGameCredits').textContent = s.dacBalance.toLocaleString() + ' CREDITS';
+  } catch(e) {}
+}
+
+async function serverPurchase(dacAmount, solAmount, txSig, isDemo) {
+  try {
+    const r = await fetch('/api/game/purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dacAmount,
+        solAmount: solAmount || 0,
+        txSig: txSig || null,
+        description: (isDemo ? '[DEMO] ' : '') + 'Bought ' + dacAmount.toLocaleString() + ' DAC',
+      }),
+    });
+    if (r.ok) {
+      const data = await r.json();
+      wallet.inGameCredits = data.newBalance;
+      localStorage.setItem('jli_credits', data.newBalance);
+    }
+  } catch(e) {}
+}
+
+async function loadServerHistory() {
+  try {
+    const r = await fetch('/api/game/history');
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!rows.length) return;
+    txHistory = rows.map(row => ({
+      id:     row.id,
+      type:   'success',
+      desc:   row.description,
+      meta:   new Date(row.created_at).toLocaleString(),
+      dacAmt: '+' + parseInt(row.dac_amount).toLocaleString() + ' DAC',
+      solAmt: parseFloat(row.sol_amount) > 0 ? '-' + parseFloat(row.sol_amount) + ' SOL' : '—',
+      txSig:  row.tx_sig,
+    }));
+    renderTxHistory();
+  } catch(e) {}
+}
+
 /* ─── TOAST ─── */
 function showToast(msg, type='info') {
   const t = document.getElementById('toast');
@@ -1203,6 +1255,8 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 /* ═══════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════ */
+loadServerState();
+loadServerHistory();
 renderTxHistory();
 fetchBlockHeight();
 setInterval(fetchBlockHeight, 30000);

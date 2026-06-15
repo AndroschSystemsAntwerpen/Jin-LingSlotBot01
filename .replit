@@ -1,4 +1,4 @@
-modules = ["web", "nodejs-20"]
+modules = ["web", "nodejs-20", "postgresql-16"]
 [agent]
 expertMode = true
 integrations = ["javascript_log_in_with_replit:2.0.0"]
