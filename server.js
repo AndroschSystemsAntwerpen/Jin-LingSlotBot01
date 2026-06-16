@@ -3,6 +3,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { discovery, buildEndSessionUrl } from 'openid-client';
 import { Strategy } from 'openid-client/passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -113,7 +114,44 @@ app.use(passport.session());
 passport.serializeUser((u, cb) => cb(null, u));
 passport.deserializeUser((u, cb) => cb(null, u));
 
+// ── GOOGLE OAUTH STRATEGY ─────────────────────────────
+let googleStrategyReady = false;
+function ensureGoogleStrategy() {
+  if (googleStrategyReady || !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) return;
+  passport.use('google', new GoogleStrategy(
+    {
+      clientID:     process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL:  '/api/auth/google/callback',
+      proxy: true,
+    },
+    (_accessToken, _refreshToken, profile, done) => {
+      done(null, {
+        id:              `google:${profile.id}`,
+        email:           profile.emails?.[0]?.value ?? null,
+        firstName:       profile.name?.givenName ?? null,
+        lastName:        profile.name?.familyName ?? null,
+        profileImageUrl: profile.photos?.[0]?.value ?? null,
+      });
+    }
+  ));
+  googleStrategyReady = true;
+}
+ensureGoogleStrategy();
+
 // ── AUTH ROUTES ───────────────────────────────────────
+app.get('/api/auth/google', (req, res, next) => {
+  ensureGoogleStrategy();
+  if (!googleStrategyReady) return res.redirect('/api/login');
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
+
+app.get('/api/auth/google/callback', (req, res, next) => {
+  ensureGoogleStrategy();
+  if (!googleStrategyReady) return res.redirect('/login');
+  passport.authenticate('google', { successRedirect: '/', failureRedirect: '/login' })(req, res, next);
+});
+
 app.get('/api/login', async (req, res, next) => {
   try {
     const config = await getOidcConfig();

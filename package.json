@@ -16,6 +16,7 @@
     "express-session": "^1.19.0",
     "openid-client": "^6.8.4",
     "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "pg": "^8.21.0"
   }
 }
