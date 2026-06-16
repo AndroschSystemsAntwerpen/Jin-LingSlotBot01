@@ -109,6 +109,17 @@ app.use(session({
   resave: false, saveUninitialized: false,
   cookie: { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 7 * 24 * 60 * 60 * 1000 },
 }));
+// Passport 0.7+ compatibility: ensure session has regenerate/save methods
+app.use((req, res, next) => {
+  if (req.session && !req.session.regenerate) {
+    req.session.regenerate = (cb) => { cb(); };
+  }
+  if (req.session && !req.session.save) {
+    req.session.save = (cb) => { cb(); };
+  }
+  next();
+});
+
 app.use(passport.initialize());
 app.use(passport.session());
 passport.serializeUser((u, cb) => cb(null, u));
@@ -166,13 +177,18 @@ app.get('/api/callback', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-app.get('/api/logout', async (req, res) => {
-  req.logout(() => {});
-  req.session.destroy(() => {});
-  try {
-    const config = await getOidcConfig();
-    res.redirect(buildEndSessionUrl(config, { client_id: process.env.REPL_ID, post_logout_redirect_uri: `${req.protocol}://${req.hostname}` }).href);
-  } catch { res.redirect('/login'); }
+app.get('/api/logout', (req, res) => {
+  const finish = async () => {
+    try {
+      const config = await getOidcConfig();
+      res.redirect(buildEndSessionUrl(config, { client_id: process.env.REPL_ID, post_logout_redirect_uri: `${req.protocol}://${req.hostname}` }).href);
+    } catch { res.redirect('/login'); }
+  };
+  if (req.isAuthenticated()) {
+    req.logout((err) => { if (req.session) req.session.destroy(() => finish()); else finish(); });
+  } else {
+    finish();
+  }
 });
 
 app.get('/api/me', (req, res) => {
